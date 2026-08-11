@@ -7,6 +7,8 @@ from zensical_pdf import PandocError, PandocNotFoundError
 
 # Typst writer requires Pandoc ≥ 3.1.2
 _MIN_VERSION = (3, 1, 2)
+_TYPST_EMPTY_FONT_DEFAULT = "font: (),"
+_TYPST_SAFE_FONT_DEFAULT = 'font: ("New Computer Modern"),'
 
 
 def _parse_version_tuple(text: str) -> tuple[int, ...]:
@@ -56,6 +58,7 @@ class PandocAdapter:
         ]
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True)
+            self._ensure_nonempty_font_default(output_path)
         except FileNotFoundError as exc:
             raise PandocNotFoundError(
                 "Pandoc is not available on PATH. "
@@ -67,3 +70,22 @@ class PandocAdapter:
                 f"Pandoc exited with code {exc.returncode}.\n"
                 f"Stderr: {exc.stderr.strip()}"
             ) from exc
+
+    def _ensure_nonempty_font_default(self, typst_path: Path) -> None:
+        """Patch Pandoc Typst output so Typst always gets a non-empty font fallback list."""
+        if not typst_path.exists():
+            return
+
+        try:
+            content = typst_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise PandocError(f"Cannot read generated Typst file '{typst_path}': {exc}") from exc
+
+        if _TYPST_EMPTY_FONT_DEFAULT not in content:
+            return
+
+        patched = content.replace(_TYPST_EMPTY_FONT_DEFAULT, _TYPST_SAFE_FONT_DEFAULT, 1)
+        try:
+            typst_path.write_text(patched, encoding="utf-8")
+        except OSError as exc:
+            raise PandocError(f"Cannot update generated Typst file '{typst_path}': {exc}") from exc

@@ -125,6 +125,39 @@ def test_convert_uses_list_args_not_shell_string(tmp_path: Path) -> None:
     assert isinstance(cmd, list), "Command must be a list, never a shell string"
 
 
+def test_convert_patches_empty_typst_font_default(tmp_path: Path) -> None:
+    input_path = tmp_path / "in.md"
+    input_path.write_text("# Title\n", encoding="utf-8")
+    output_path = tmp_path / "document.typ"
+
+    def _fake_run(*args, **kwargs):
+        output_path.write_text("#let conf(font: (), doc) = doc\n", encoding="utf-8")
+        return MagicMock(returncode=0)
+
+    with patch(_PANDOC_MODULE, side_effect=_fake_run):
+        PandocAdapter().convert(input_path, output_path)
+
+    generated = output_path.read_text(encoding="utf-8")
+    assert 'font: ("New Computer Modern"),' in generated
+
+
+def test_convert_keeps_nonempty_typst_font_default(tmp_path: Path) -> None:
+    input_path = tmp_path / "in.md"
+    input_path.write_text("# Title\n", encoding="utf-8")
+    output_path = tmp_path / "document.typ"
+
+    original = '#let conf(font: ("Inter"), doc) = doc\n'
+
+    def _fake_run(*args, **kwargs):
+        output_path.write_text(original, encoding="utf-8")
+        return MagicMock(returncode=0)
+
+    with patch(_PANDOC_MODULE, side_effect=_fake_run):
+        PandocAdapter().convert(input_path, output_path)
+
+    assert output_path.read_text(encoding="utf-8") == original
+
+
 # ---------------------------------------------------------------------------
 # PandocAdapter.convert — error handling
 # ---------------------------------------------------------------------------
