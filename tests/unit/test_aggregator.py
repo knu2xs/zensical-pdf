@@ -6,6 +6,7 @@ from zensical_pdf.aggregator import (
     AggregatedDocument,
     aggregate,
     normalize_headings,
+    sanitize_linked_external_images,
     strip_front_matter,
 )
 from zensical_pdf.config import PdfConfig
@@ -108,6 +109,26 @@ def test_normalize_headings_only_affects_headings_not_inline() -> None:
     result = normalize_headings(content)
     assert result.startswith("## Title")
     assert "This is not a ## heading." in result
+
+
+def test_sanitize_linked_external_images_rewrites_badge_syntax() -> None:
+    content = (
+        "[![Tests](https://example.com/badge.svg)](https://example.com/workflow)\n"
+        "[![PyPI](https://example.com/pypi.svg)](https://pypi.org/project/demo/)\n"
+    )
+    result = sanitize_linked_external_images(content)
+    assert "[Tests](https://example.com/workflow)" in result
+    assert "[PyPI](https://pypi.org/project/demo/)" in result
+    assert "![Tests]" not in result
+
+
+def test_sanitize_linked_external_images_skips_fenced_code_blocks() -> None:
+    content = (
+        "```markdown\n"
+        "[![Tests](https://example.com/badge.svg)](https://example.com/workflow)\n"
+        "```\n"
+    )
+    assert sanitize_linked_external_images(content) == content
 
 
 # ---------------------------------------------------------------------------

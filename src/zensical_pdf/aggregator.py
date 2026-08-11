@@ -11,6 +11,9 @@ from zensical_pdf.nav import NavResult
 
 _FRONT_MATTER_RE = re.compile(r'\A---[ \t]*\n.*?\n---[ \t]*\n', re.DOTALL)
 _HEADING_RE = re.compile(r'^(#{1,6})(\s)', re.MULTILINE)
+_LINKED_EXTERNAL_IMAGE_RE = re.compile(
+    r'\[!\[([^\]]*)\]\((https?://[^)\s]+(?:\s+"[^"]*")?)\)\]\(([^)\s]+(?:\s+"[^"]*")?)\)'
+)
 
 
 @dataclass
@@ -38,6 +41,29 @@ def normalize_headings(content: str) -> str:
     return _HEADING_RE.sub(_shift, content)
 
 
+def sanitize_linked_external_images(content: str) -> str:
+        """Rewrite linked remote images to plain links for Pandoc/Typst compatibility.
+
+        This targets badge-style markdown like:
+            [![Tests](https://.../badge.svg)](https://...)
+        and rewrites it to:
+            [Tests](https://...)
+
+        The rewrite is only applied outside fenced code blocks.
+        """
+
+        def _replace(match: re.Match) -> str:
+                alt_text = match.group(1).strip() or "link"
+                target = match.group(3).split(" ", 1)[0]
+                return f"[{alt_text}]({target})"
+
+        # Keep fenced code blocks intact by only transforming non-code segments.
+        segments = content.split("```")
+        for i in range(0, len(segments), 2):
+                segments[i] = _LINKED_EXTERNAL_IMAGE_RE.sub(_replace, segments[i])
+        return "```".join(segments)
+
+
 def aggregate(config: PdfConfig, nav_result: NavResult) -> AggregatedDocument:
     """Aggregate pages into build/pdf/combined.md and copy local image assets."""
     config.build_dir.mkdir(parents=True, exist_ok=True)
@@ -62,6 +88,7 @@ def aggregate(config: PdfConfig, nav_result: NavResult) -> AggregatedDocument:
         content = strip_front_matter(raw)
         if config.normalize_headings:
             content = normalize_headings(content)
+        content = sanitize_linked_external_images(content)
 
         content, asset_copies = rewrite_image_paths(
             content=content,
