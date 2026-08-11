@@ -1,4 +1,6 @@
 from pathlib import Path
+import struct
+import zlib
 
 import pytest
 
@@ -190,3 +192,25 @@ def test_rewrite_records_asset_copy_fields(tmp_path: Path) -> None:
     assert c.original_reference == "logo.png"
     assert c.rewritten_reference == "assets/logo.png"
     assert c.dest_path.name == "logo.png"
+
+
+def test_example_diagram_png_has_valid_crc() -> None:
+    png_path = Path("example/docs/assets/diagram.png")
+    data = png_path.read_bytes()
+
+    assert data.startswith(b"\x89PNG\r\n\x1a\n")
+
+    i = 8
+    while i < len(data):
+        length = struct.unpack(">I", data[i:i + 4])[0]
+        i += 4
+        chunk_type = data[i:i + 4]
+        i += 4
+        chunk_data = data[i:i + length]
+        i += length
+        chunk_crc = struct.unpack(">I", data[i:i + 4])[0]
+        i += 4
+
+        computed_crc = zlib.crc32(chunk_type)
+        computed_crc = zlib.crc32(chunk_data, computed_crc) & 0xFFFFFFFF
+        assert chunk_crc == computed_crc, f"Invalid CRC for chunk {chunk_type!r}"

@@ -35,3 +35,6 @@ dist/
 # Spec-kit cache
 .specify/__pycache__/
 .specify/scripts/python/__pycache__/
+
+# the uv lockfile
+uv.lock

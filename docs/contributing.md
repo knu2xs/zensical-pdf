@@ -193,17 +193,20 @@ All five levels are checked in `resolve_config()`.
 ### Key Design Patterns
 
 **Dataclasses for Data:**
+
 - `PdfConfig` — all configuration
 - `NavEntry` / `NavResult` — navigation structure
 - `AggregatedDocument` — aggregated content
 - `DoctorCheck` / `DoctorResult` — validation results
 
 **Adapters for External Tools:**
+
 - `PandocAdapter` — wraps Pandoc subprocess
 - `TypstAdapter` — wraps Typst subprocess
 - Both handle version checking and error mapping
 
 **Subprocess Pattern:**
+
 ```python
 result = subprocess.run(
     ["tool", "arg1", "arg2"],  # Always use list, never string!
@@ -225,6 +228,7 @@ git checkout -b fix/my-bugfix
 ```
 
 Branch naming:
+
 - `feature/` for new features
 - `fix/` for bug fixes
 - `docs/` for documentation
@@ -255,6 +259,7 @@ def test_my_new_feature():
 ```
 
 **Test Guidelines:**
+
 - One test per behavior
 - Use descriptive names: `test_<function>_<scenario>`
 - Mock all external dependencies (Pandoc, Typst)
@@ -292,6 +297,7 @@ git commit -m "feat: add new feature
 ```
 
 Commit message format:
+
 - Type: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`
 - Scope (optional): module or component
 - Description: what changed and why
@@ -313,28 +319,33 @@ Then create a Pull Request on GitHub.
 ### Before Submitting
 
 1. **Sync with main:**
+
 ```bash
 git fetch upstream
 git rebase upstream/main
 ```
 
 2. **Run full test suite:**
+
 ```bash
 pytest
 ```
 
 3. **Check coverage:**
+
 ```bash
 pytest --cov=src/zensical_pdf
 # Should be >90% for new code
 ```
 
 4. **Format code:**
+
 ```bash
 black src/ tests/
 ```
 
 5. **Lint:**
+
 ```bash
 pylint src/zensical_pdf
 mypy src/zensical_pdf
@@ -343,6 +354,7 @@ mypy src/zensical_pdf
 ### Submitting PR
 
 Create a pull request with:
+
 - **Clear title:** `feat: add feature X` or `fix: resolve issue #123`
 - **Description:** What problem does this solve? How?
 - **Testing:** What tests were added? What manual testing?
@@ -372,6 +384,7 @@ Create a pull request with:
 ### Versioning
 
 zensical-pdf follows [Semantic Versioning](https://semver.org/):
+
 - `MAJOR.MINOR.PATCH` (e.g., `1.2.3`)
 - MAJOR: breaking changes
 - MINOR: new features (backward compatible)
@@ -382,12 +395,14 @@ zensical-pdf follows [Semantic Versioning](https://semver.org/):
 1. **Update version** in `src/zensical_pdf/__init__.py` and `setup.py`
 2. **Update CHANGELOG.md** with release notes
 3. **Tag release:**
+
 ```bash
 git tag -a v1.2.3 -m "Release 1.2.3"
 git push origin v1.2.3
 ```
 
 4. **Publish to PyPI:**
+
 ```bash
 python -m build
 python -m twine upload dist/*
@@ -400,6 +415,7 @@ python -m twine upload dist/*
 ### Python Style Guide
 
 Follow [PEP 8](https://pep8.org/):
+
 - 4 spaces per indentation level
 - Max line length: 100 characters
 - Use type hints for all functions
@@ -459,12 +475,14 @@ def aggregate_markdown(nav: NavResult, docs_dir: Path) -> AggregatedDocument:
 - Update comments when code changes
 
 Good:
+
 ```python
 # Use content hashing to deduplicate identical assets
 sha256 = hashlib.sha256(content).hexdigest()
 ```
 
 Bad:
+
 ```python
 # Calculate SHA256
 sha256 = hashlib.sha256(content).hexdigest()
@@ -479,6 +497,7 @@ sha256 = hashlib.sha256(content).hexdigest()
 **Cause:** Different Python version, missing dependencies, or environment issues.
 
 **Solution:**
+
 ```bash
 # Ensure you have the right Python version
 python --version  # Should be 3.10+
@@ -498,6 +517,7 @@ pytest -v
 **Cause:** Package not installed in editable mode.
 
 **Solution:**
+
 ```bash
 pip install -e .
 ```
@@ -507,6 +527,7 @@ pip install -e .
 **Cause:** Type hints don't match implementation.
 
 **Solution:**
+
 ```bash
 # Check what mypy complains about
 mypy src/zensical_pdf
@@ -519,6 +540,7 @@ mypy src/zensical_pdf
 **Cause:** Black and Pylint disagree on formatting.
 
 **Solution:**
+
 - Run Black first: `black src/`
 - Then Pylint: `pylint src/`
 - Black takes precedence
