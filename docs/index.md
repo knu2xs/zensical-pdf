@@ -9,6 +9,7 @@ A powerful CLI tool that aggregates Markdown documentation and compiles it to PD
 ## The Problem
 
 You have documentation spread across multiple Markdown files, organized in a docs folder with navigation defined in `zensical.toml` (or `mkdocs.yml` for legacy projects). You want to generate a **single, cohesive PDF** that includes all your content, properly formatted with:
+
 - A title page with metadata
 - Automatic table of contents
 - Proper heading hierarchy
@@ -20,29 +21,34 @@ You have documentation spread across multiple Markdown files, organized in a doc
 ## Key Features
 
 ✨ **Markdown Aggregation**
+
 - Scans your docs folder following your configured navigation structure
 - Aggregates all Markdown files into a single document
 - Preserves heading hierarchy with automatic normalization
 
 📦 **Asset Management**
+
 - Finds and copies local images into the build directory
 - Rewrites image paths in both Markdown and HTML references
 - Deduplicates assets using content hashing
 - Passes through external URLs unchanged
 
 ⚙️ **Configuration Hierarchy**
+
 - CLI arguments (highest priority)
 - `zensical-pdf.toml` project config
 - `zensical.toml` metadata and nav extraction (with MkDocs fallback)
 - Built-in defaults (lowest priority)
 
 📄 **PDF Generation**
+
 - Converts Markdown → Typst via Pandoc (3.1.2+)
 - Compiles Typst → PDF with custom templates
 - Supports heading numbering, TOC generation, custom branding
 - Configurable fonts, colors, and document options
 
 🔍 **Validation & Diagnostics**
+
 - `doctor` command checks Python version, Pandoc, Typst, config, and directories
 - Comprehensive error messages with troubleshooting hints
 - Permissive mode to skip missing files
@@ -60,6 +66,7 @@ pip install zensical-pdf
 ```
 
 **Prerequisites:**
+
 - Python 3.10 or later
 - Pandoc 3.1.2 or later (with Typst writer support)
 - Typst 0.8.0 or later
@@ -92,7 +99,7 @@ A complete example project is included in the `example/` directory. It demonstra
 
 ## License
 
-MIT License — see [LICENSE](../LICENSE) for details.
+Apache License 2.0 — see [LICENSE](../LICENSE) for details.
 
 ---
 
