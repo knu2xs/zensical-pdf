@@ -6,8 +6,8 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'zensical.toml'
       - '.github/workflows/docs.yml'
-      - 'README.md'
   workflow_dispatch:
 
 permissions:
@@ -20,44 +20,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build Documentation
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        
-      - name: Setup Ruby and Jekyll
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-          working-directory: ./docs
-          
-      - name: Build site with Jekyll
-        working-directory: ./docs
-        run: bundle exec jekyll build --baseurl="/zensical-pdf"
-        
-      - name: Upload artifact for GitHub Pages deployment
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './docs/_site'
-
   deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
+    name: Build and Deploy Documentation
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-      
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+    runs-on: ubuntu-latest
 
-  # Optional: Build PDF version of docs using zensical-pdf (dogfooding)
+    steps:
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+
+      - run: pip install zensical
+
+      - run: zensical build --clean
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - uses: actions/deploy-pages@v5
+        id: deployment
+
+  # Dogfood: build the project docs as a PDF using zensical-pdf itself
   build-pdf:
     name: Build Docs as PDF
     runs-on: ubuntu-latest
