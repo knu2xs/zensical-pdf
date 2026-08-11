@@ -80,7 +80,7 @@ jobs:
         run: |
           wget https://github.com/typst/typst/releases/download/v0.9.0/typst-x86_64-unknown-linux-musl.tar.xz
           tar -xf typst-x86_64-unknown-linux-musl.tar.xz
-          sudo mv typst /usr/local/bin/
+          sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
           typst --version
           
       - name: Install zensical-pdf
