@@ -30,15 +30,17 @@ Thank you for your interest in contributing to zensical-pdf! This guide will hel
 
 1. Fork the repository on GitHub
 2. Clone your fork:
-```bash
-git clone https://github.com/YOUR-USERNAME/zensical-pdf.git
-cd zensical-pdf
-```
+
+    ```bash
+    git clone https://github.com/YOUR-USERNAME/zensical-pdf.git
+    cd zensical-pdf
+    ```
 
 3. Add upstream remote for syncing:
-```bash
-git remote add upstream https://github.com/zensical/zensical-pdf.git
-```
+
+    ```bash
+    git remote add upstream https://github.com/zensical/zensical-pdf.git
+    ```
 
 ---
 
@@ -60,6 +62,7 @@ pip install -e ".[dev]"
 ```
 
 This installs zensical-pdf in editable mode with all development tools:
+
 - pytest — testing framework
 - pytest-cov — code coverage
 - black — code formatter
@@ -135,6 +138,7 @@ tests/
 ```
 
 **Key Testing Patterns:**
+
 - All subprocess calls are mocked using `unittest.mock`
 - No external dependencies during test execution
 - Fixtures use temporary directories (`tmp_path`)

@@ -51,6 +51,7 @@ zensical-pdf doctor
 ```
 
 You should see a table with ✓ (pass) status for all checks:
+
 - Python version ✓
 - Pandoc installed & version ✓
 - Typst installed & version ✓
@@ -69,6 +70,7 @@ pip install zensical-pdf
 ```
 
 Or install from source (development):
+
 ```bash
 git clone https://github.com/zensical/zensical-pdf.git
 cd zensical-pdf
@@ -150,6 +152,7 @@ zensical-pdf build
 ```
 
 This does everything:
+
 1. **Aggregates** all Markdown files into a single document
 2. **Copies** local images to the build directory
 3. **Rewrites** image paths
@@ -161,6 +164,7 @@ The PDF appears at `dist/documentation.pdf` (or your configured output path).
 ## Step 4: Verify the Output
 
 Open your PDF:
+
 ```bash
 # macOS
 open dist/documentation.pdf
@@ -179,17 +183,22 @@ start dist/documentation.pdf
 ## Troubleshooting
 
 ### "pandoc not found"
+
 Install Pandoc using the prerequisites section above, or ensure it's in your PATH:
+
 ```bash
 which pandoc  # macOS/Linux
 where pandoc  # Windows
 ```
 
 ### "typst not found"
+
 Install Typst using the prerequisites section above.
 
 ### "Python version X.Y is not 3.10 or later"
+
 Upgrade Python:
+
 ```bash
 python3.11 --version  # Use Python 3.11+ binary directly
 python3.11 -m pip install zensical-pdf
