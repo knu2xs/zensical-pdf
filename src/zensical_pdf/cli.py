@@ -6,8 +6,10 @@ from typing import Annotated, Optional
 import typer
 from rich.console import Console
 
-from zensical_pdf import ConfigNotFoundError, NavResolutionError
+from zensical_pdf import AggregationError, AssetError, ConfigNotFoundError, NavResolutionError
+from zensical_pdf.aggregator import aggregate as _do_aggregate
 from zensical_pdf.config import resolve_config
+from zensical_pdf.manifest import write_aggregation_manifest
 from zensical_pdf.nav import resolve_nav
 
 app = typer.Typer(
@@ -72,8 +74,35 @@ def aggregate(
     permissive: Permissive = False,
 ) -> None:
     """Aggregate documentation pages into a combined Markdown file and copy local assets."""
-    _err.print("[yellow]aggregate: not yet implemented[/yellow]")
-    raise typer.Exit(code=0)
+    try:
+        config = resolve_config(project_dir.resolve(), permissive=permissive)
+    except ConfigNotFoundError as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    try:
+        nav = resolve_nav(config)
+    except NavResolutionError as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    for warning in nav.warnings:
+        _err.print(f"[yellow]WARNING:[/yellow] {warning}")
+
+    try:
+        agg_doc = _do_aggregate(config, nav)
+        manifest_path = write_aggregation_manifest(config, nav, agg_doc)
+    except (AggregationError, AssetError) as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    for warning in agg_doc.warnings:
+        _err.print(f"[yellow]WARNING:[/yellow] {warning}")
+
+    _out.print(f"Written  : {agg_doc.output_path}")
+    _out.print(f"Manifest : {manifest_path}")
+    _out.print(f"Pages    : {len(agg_doc.pages_included)}")
+    _out.print(f"Assets   : {len(agg_doc.assets)}")
 
 
 @app.command("build")

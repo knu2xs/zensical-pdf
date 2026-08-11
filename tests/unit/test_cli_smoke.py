@@ -47,8 +47,8 @@ def test_inspect_nav_exits_zero(project_dir: Path) -> None:
     assert result.exit_code == 0
 
 
-def test_aggregate_exits_zero(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["aggregate", "--project-dir", str(tmp_path)])
+def test_aggregate_exits_zero(project_dir: Path) -> None:
+    result = runner.invoke(app, ["aggregate", "--project-dir", str(project_dir)])
     assert result.exit_code == 0
 
 
