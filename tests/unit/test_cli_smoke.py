@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 
 from zensical_pdf.cli import app
 
-runner = CliRunner()
+runner = CliRunner(env={"NO_COLOR": "1"})
 
 
 def test_help_lists_all_commands() -> None:
