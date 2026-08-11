@@ -1,5 +1,6 @@
 """Smoke tests: verify CLI installs, all subcommands are registered, and each exits cleanly."""
 from pathlib import Path
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
@@ -52,9 +53,12 @@ def test_aggregate_exits_zero(project_dir: Path) -> None:
     assert result.exit_code == 0
 
 
-def test_build_exits_zero(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["build", "--project-dir", str(tmp_path)])
-    assert result.exit_code == 0
+def test_build_fails_gracefully_when_pandoc_missing(project_dir: Path) -> None:
+    """Build exits 1 with an actionable message when Pandoc is not installed."""
+    with patch("zensical_pdf.adapters.pandoc.subprocess.run", side_effect=FileNotFoundError):
+        result = runner.invoke(app, ["build", "--project-dir", str(project_dir)])
+    assert result.exit_code == 1
+    assert "Pandoc" in result.output
 
 
 def test_doctor_exits_zero(tmp_path: Path) -> None:

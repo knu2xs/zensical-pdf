@@ -6,10 +6,21 @@ from typing import Annotated, Optional
 import typer
 from rich.console import Console
 
-from zensical_pdf import AggregationError, AssetError, ConfigNotFoundError, NavResolutionError
+from zensical_pdf import (
+    AggregationError,
+    AssetError,
+    ConfigNotFoundError,
+    NavResolutionError,
+    PandocError,
+    PandocNotFoundError,
+    TypstError,
+    TypstNotFoundError,
+)
+from zensical_pdf.adapters.pandoc import PandocAdapter
+from zensical_pdf.adapters.typst import TypstAdapter
 from zensical_pdf.aggregator import aggregate as _do_aggregate
 from zensical_pdf.config import resolve_config
-from zensical_pdf.manifest import write_aggregation_manifest
+from zensical_pdf.manifest import write_aggregation_manifest, write_build_manifest
 from zensical_pdf.nav import resolve_nav
 
 app = typer.Typer(
@@ -115,8 +126,53 @@ def build(
     permissive: Permissive = False,
 ) -> None:
     """Run the complete pipeline: nav → aggregate → Pandoc → Typst → PDF."""
-    _err.print("[yellow]build: not yet implemented[/yellow]")
-    raise typer.Exit(code=0)
+    try:
+        config = resolve_config(project_dir.resolve(), output=output, permissive=permissive)
+    except ConfigNotFoundError as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    try:
+        nav = resolve_nav(config)
+    except NavResolutionError as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    for warning in nav.warnings:
+        _err.print(f"[yellow]WARNING:[/yellow] {warning}")
+
+    pandoc = PandocAdapter()
+    typst_compiler = TypstAdapter()
+
+    try:
+        _err.print("Aggregating pages...")
+        agg_doc = _do_aggregate(config, nav)
+        write_aggregation_manifest(config, nav, agg_doc)
+
+        typst_path = config.build_dir / "document.typ"
+        _err.print("Converting Markdown to Typst via Pandoc...")
+        pandoc.convert(agg_doc.output_path, typst_path)
+
+        config.output.parent.mkdir(parents=True, exist_ok=True)
+        _err.print("Compiling Typst to PDF...")
+        typst_compiler.compile(typst_path, config.output)
+
+        write_build_manifest(config, nav, agg_doc, typst_path)
+
+    except (AggregationError, AssetError) as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    except (PandocNotFoundError, TypstNotFoundError) as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    except (PandocError, TypstError) as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    for warning in agg_doc.warnings:
+        _err.print(f"[yellow]WARNING:[/yellow] {warning}")
+
+    _out.print(f"PDF written: {config.output}")
 
 
 @app.command("doctor")
