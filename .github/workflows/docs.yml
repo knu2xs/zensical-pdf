@@ -1,0 +1,126 @@
+name: Publish Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Ruby and Jekyll
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: ./docs
+          
+      - name: Build site with Jekyll
+        working-directory: ./docs
+        run: bundle exec jekyll build --baseurl="/zensical-pdf"
+        
+      - name: Upload artifact for GitHub Pages deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './docs/_site'
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Optional: Build PDF version of docs using zensical-pdf (dogfooding)
+  build-pdf:
+    name: Build Docs as PDF
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc pandoc-data
+          
+      - name: Install Typst
+        run: |
+          wget https://github.com/typst/typst/releases/download/v0.9.0/typst-x86_64-unknown-linux-musl.tar.xz
+          tar -xf typst-x86_64-unknown-linux-musl.tar.xz
+          sudo mv typst /usr/local/bin/
+          typst --version
+          
+      - name: Install zensical-pdf
+        run: |
+          pip install -e .
+          
+      - name: Generate PDF of documentation
+        run: |
+          # Create a temporary directory structure for zensical-pdf
+          mkdir -p docs-build/docs
+          cp docs/*.md docs-build/docs/
+          
+          # Create a minimal zensical-pdf.toml
+          cat > docs-build/zensical-pdf.toml << 'EOF'
+          [zensical-pdf]
+          title = "zensical-pdf Documentation"
+          subtitle = "User and Developer Guide"
+          author = "Zensical"
+          version = "1.0.0"
+          output = "dist/documentation.pdf"
+          include_toc = true
+          number_sections = true
+          EOF
+          
+          # Create a minimal mkdocs.yml for navigation
+          cat > docs-build/mkdocs.yml << 'EOF'
+          site_name: zensical-pdf Documentation
+          nav:
+            - Home: index.md
+            - Quick Start: quickstart.md
+            - Complete Guide: guide.md
+            - Contributing: contributing.md
+          EOF
+          
+          cd docs-build
+          zensical-pdf build
+          
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-pdf
+          path: docs-build/dist/documentation.pdf
+          retention-days: 30

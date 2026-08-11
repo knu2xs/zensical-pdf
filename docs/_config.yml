@@ -1,0 +1,27 @@
+# Jekyll configuration for GitHub Pages
+title: zensical-pdf
+description: Aggregate Markdown documentation and compile to PDF
+url: "https://zensical.github.io"
+baseurl: "/zensical-pdf"
+author: Zensical
+email: dev@zensical.dev
+
+# Jekyll theme
+theme: jekyll-theme-minimal
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Markdown engine
+markdown: kramdown
+
+# Exclude from site
+exclude:
+  - .gitignore
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/

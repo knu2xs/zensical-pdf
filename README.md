@@ -6,6 +6,16 @@ Generate customer-ready PDF deliverables from [Zensical](https://zensical.com) a
 
 ---
 
+## Documentation
+
+📚 **[View Full Documentation](docs/index.md)**
+
+- **[Quick Start](docs/quickstart.md)** — Get started in 5 minutes
+- **[Complete Guide](docs/guide.md)** — Comprehensive reference, configuration, examples
+- **[Contributing Guide](docs/contributing.md)** — Development setup, testing, pull requests
+
+---
+
 ## Prerequisites
 
 | Tool | Version | Install |
