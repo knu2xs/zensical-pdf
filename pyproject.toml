@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "zensical-pdf"
+version = "0.1.0"
+description = "Generate PDF deliverables from Zensical and MkDocs-style documentation projects"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "typer>=0.12",
+    "rich>=13",
+    "pyyaml>=6",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.scripts]
+zensical-pdf = "zensical_pdf.cli:app"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zensical_pdf"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
