@@ -5,6 +5,8 @@ from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 from zensical_pdf import (
     AggregationError,
@@ -180,5 +182,29 @@ def doctor(
     project_dir: ProjectDir = Path("."),
 ) -> None:
     """Validate the local environment (Python, Pandoc, Typst, project config)."""
-    _err.print("[yellow]doctor: not yet implemented[/yellow]")
-    raise typer.Exit(code=0)
+    from zensical_pdf.doctor import run_doctor
+
+    result = run_doctor(project_dir.resolve(), PandocAdapter(), TypstAdapter())
+
+    grid = Table.grid(padding=(0, 2))
+    for check in result.checks:
+        if check.status == "pass":
+            icon, color = "✓", "green"
+        elif check.status == "warn":
+            icon, color = "⚠", "yellow"
+        else:
+            icon, color = "✗", "red"
+        grid.add_row(
+            f"[{color}]{icon}[/{color}]",
+            f"[bold]{check.name}[/bold]",
+            check.detail,
+        )
+
+    _out.print(Panel(grid, title="Environment Check", border_style="blue", padding=(1, 2)))
+
+    if result.all_pass:
+        _out.print("[green]All checks passed.[/green]")
+    else:
+        failing = sum(1 for c in result.checks if c.status == "fail")
+        _out.print(f"[red]{failing} check(s) failed.[/red]")
+        raise typer.Exit(code=1)

@@ -1,0 +1,13 @@
+[project]
+title = "Example Documentation"
+author = "Your Name"
+version = "0.1.0"
+
+[paths]
+output = "dist/example-documentation.pdf"
+
+[pdf]
+normalize_headings = true
+include_toc = true
+number_sections = false
+missing_asset_policy = "warn"

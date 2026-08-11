@@ -1,0 +1,40 @@
+name: Build Example PDF
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Pandoc 3.2.1
+        run: |
+          wget -q https://github.com/jgm/pandoc/releases/download/3.2.1/pandoc-3.2.1-1-amd64.deb
+          sudo dpkg -i pandoc-3.2.1-1-amd64.deb
+
+      - uses: typst-community/setup-typst@v4
+
+      - name: Install zensical-pdf
+        run: pip install -e .
+
+      - name: Validate environment
+        run: zensical-pdf doctor --project-dir example/
+
+      - name: Build example PDF
+        run: zensical-pdf build --project-dir example/
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: example-pdf
+          path: example/dist/
+          if-no-files-found: error
