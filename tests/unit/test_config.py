@@ -7,6 +7,7 @@ from zensical_pdf.config import (
     PdfConfig,
     load_mkdocs_metadata,
     load_toml_config,
+    load_zensical_metadata,
     resolve_config,
 )
 
@@ -17,6 +18,10 @@ def _mkdocs(tmp_path: Path, content: str) -> None:
 
 def _toml(tmp_path: Path, content: str) -> None:
     (tmp_path / "zensical-pdf.toml").write_text(content, encoding="utf-8")
+
+
+def _zensical(tmp_path: Path, content: str) -> None:
+    (tmp_path / "zensical.toml").write_text(content, encoding="utf-8")
 
 
 def _docs(tmp_path: Path) -> Path:
@@ -61,6 +66,26 @@ def test_load_mkdocs_metadata_ignores_nav(tmp_path: Path) -> None:
     _mkdocs(tmp_path, "site_name: X\nnav:\n  - Home: index.md\n")
     meta = load_mkdocs_metadata(tmp_path)
     assert "nav" not in meta
+
+
+# ---------------------------------------------------------------------------
+# load_zensical_metadata
+# ---------------------------------------------------------------------------
+
+
+def test_load_zensical_metadata_missing_returns_empty(tmp_path: Path) -> None:
+    assert load_zensical_metadata(tmp_path) == {}
+
+
+def test_load_zensical_metadata_reads_project_fields(tmp_path: Path) -> None:
+    _zensical(
+        tmp_path,
+        '[project]\nsite_name = "Zensical Site"\ndocs_dir = "content"\nsite_author = "Zensical Author"\n',
+    )
+    meta = load_zensical_metadata(tmp_path)
+    assert meta["site_name"] == "Zensical Site"
+    assert meta["docs_dir"] == "content"
+    assert meta["site_author"] == "Zensical Author"
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +142,50 @@ def test_resolve_config_detected_config_is_mkdocs(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# resolve_config — zensical.toml
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_config_reads_site_name_from_zensical(tmp_path: Path) -> None:
+    _docs(tmp_path)
+    _zensical(tmp_path, '[project]\nsite_name = "Zensical Site"\n')
+    cfg = resolve_config(tmp_path)
+    assert cfg.title == "Zensical Site"
+
+
+def test_resolve_config_reads_docs_dir_from_zensical(tmp_path: Path) -> None:
+    content_dir = tmp_path / "content"
+    content_dir.mkdir()
+    _zensical(tmp_path, '[project]\ndocs_dir = "content"\n')
+    cfg = resolve_config(tmp_path)
+    assert cfg.docs_dir == content_dir.resolve()
+
+
+def test_resolve_config_reads_author_from_zensical(tmp_path: Path) -> None:
+    _docs(tmp_path)
+    _zensical(tmp_path, '[project]\nsite_author = "Zensical Author"\n')
+    cfg = resolve_config(tmp_path)
+    assert cfg.author == "Zensical Author"
+
+
+def test_resolve_config_detected_config_is_zensical(tmp_path: Path) -> None:
+    _docs(tmp_path)
+    _zensical(tmp_path, '[project]\nsite_name = "X"\n')
+    cfg = resolve_config(tmp_path)
+    assert cfg.detected_config == (tmp_path / "zensical.toml")
+
+
+def test_resolve_config_prefers_zensical_over_mkdocs_when_both_exist(tmp_path: Path) -> None:
+    content = tmp_path / "content"
+    content.mkdir()
+    _mkdocs(tmp_path, "site_name: MkDocs Site\ndocs_dir: docs\n")
+    _zensical(tmp_path, '[project]\nsite_name = "Zensical Site"\ndocs_dir = "content"\n')
+    cfg = resolve_config(tmp_path)
+    assert cfg.title == "Zensical Site"
+    assert cfg.docs_dir == content.resolve()
+
+
+# ---------------------------------------------------------------------------
 # resolve_config — zensical-pdf.toml
 # ---------------------------------------------------------------------------
 
@@ -160,6 +229,7 @@ def test_resolve_config_reads_pdf_options_from_toml(tmp_path: Path) -> None:
 def test_resolve_config_toml_detected_first(tmp_path: Path) -> None:
     _docs(tmp_path)
     _mkdocs(tmp_path, "site_name: X\n")
+    _zensical(tmp_path, '[project]\nsite_name = "Z"\n')
     _toml(tmp_path, '[project]\ntitle = "T"\n')
     cfg = resolve_config(tmp_path)
     assert cfg.detected_config == (tmp_path / "zensical-pdf.toml")
@@ -198,3 +268,10 @@ def test_resolve_config_succeeds_with_only_mkdocs_no_docs_dir(tmp_path: Path) ->
     _mkdocs(tmp_path, "site_name: X\n")
     cfg = resolve_config(tmp_path)
     assert cfg.detected_config == (tmp_path / "mkdocs.yml")
+
+
+def test_resolve_config_succeeds_with_only_zensical_no_docs_dir(tmp_path: Path) -> None:
+    # Config file present but docs_dir doesn't exist → still allowed (nav will warn)
+    _zensical(tmp_path, '[project]\nsite_name = "X"\n')
+    cfg = resolve_config(tmp_path)
+    assert cfg.detected_config == (tmp_path / "zensical.toml")

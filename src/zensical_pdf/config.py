@@ -44,6 +44,23 @@ def load_toml_config(project_dir: Path) -> dict[str, Any]:
         return tomllib.load(f)
 
 
+def load_zensical_metadata(project_dir: Path) -> dict[str, Any]:
+    """Extract relevant metadata from zensical.toml's [project] scope."""
+    zensical_path = project_dir / "zensical.toml"
+    if not zensical_path.is_file():
+        return {}
+    with zensical_path.open("rb") as f:
+        data = tomllib.load(f)
+    project = data.get("project", {})
+    if not isinstance(project, dict):
+        return {}
+    return {
+        "site_name": project.get("site_name"),
+        "docs_dir": project.get("docs_dir"),
+        "site_author": project.get("site_author"),
+    }
+
+
 def load_mkdocs_metadata(project_dir: Path) -> dict[str, Any]:
     """Extract only site_name and docs_dir from mkdocs.yml (nav is read by nav.py)."""
     yml_path = project_dir / "mkdocs.yml"
@@ -59,7 +76,7 @@ def load_mkdocs_metadata(project_dir: Path) -> dict[str, Any]:
 
 def _detect_config_file(project_dir: Path) -> Optional[Path]:
     """Return the first config file found in priority order."""
-    for name in ("zensical-pdf.toml", "mkdocs.yml", "zensical.toml"):
+    for name in ("zensical-pdf.toml", "zensical.toml", "mkdocs.yml"):
         candidate = project_dir / name
         if candidate.is_file():
             return candidate
@@ -73,17 +90,23 @@ def resolve_config(
 ) -> PdfConfig:
     """Build PdfConfig by merging all config sources in priority order.
 
-    Priority: CLI args > zensical-pdf.toml > mkdocs.yml > zensical.toml > defaults.
+    Priority: CLI args > zensical-pdf.toml > zensical.toml > mkdocs.yml > defaults.
     """
     project_dir = project_dir.resolve()
 
     toml = load_toml_config(project_dir)
+    zensical = load_zensical_metadata(project_dir)
     mkdocs = load_mkdocs_metadata(project_dir)
     detected_config = _detect_config_file(project_dir)
 
-    # docs_dir: toml [paths].docs_dir → mkdocs.yml docs_dir → "docs"
+    # If zensical.toml exists, prefer it as the source of project metadata and docs_dir.
+    if (project_dir / "zensical.toml").is_file():
+        mkdocs = {}
+
+    # docs_dir: toml [paths].docs_dir → zensical.toml [project].docs_dir → mkdocs.yml docs_dir → "docs"
     raw_docs_dir: str = (
         toml.get("paths", {}).get("docs_dir")
+        or zensical.get("docs_dir")
         or mkdocs.get("docs_dir")
         or "docs"
     )
@@ -91,7 +114,7 @@ def resolve_config(
 
     if detected_config is None and not docs_dir.is_dir():
         raise ConfigNotFoundError(
-            f"No configuration file (zensical-pdf.toml, mkdocs.yml, zensical.toml) "
+            f"No configuration file (zensical-pdf.toml, zensical.toml, mkdocs.yml) "
             f"found in '{project_dir}' and docs directory '{docs_dir}' does not exist."
         )
 
@@ -105,9 +128,10 @@ def resolve_config(
     raw_template = toml.get("paths", {}).get("template")
     template = (project_dir / raw_template).resolve() if raw_template else None
 
-    # title: toml → mkdocs site_name → default
+    # title: toml → zensical site_name → mkdocs site_name → default
     title: str = (
         toml.get("project", {}).get("title")
+        or zensical.get("site_name")
         or mkdocs.get("site_name")
         or "Documentation"
     )
@@ -119,7 +143,7 @@ def resolve_config(
         build_dir=(project_dir / "build" / "pdf").resolve(),
         title=title,
         subtitle=toml.get("project", {}).get("subtitle"),
-        author=toml.get("project", {}).get("author"),
+        author=toml.get("project", {}).get("author") or zensical.get("site_author"),
         version=toml.get("project", {}).get("version"),
         template=template,
         normalize_headings=bool(toml.get("pdf", {}).get("normalize_headings", True)),

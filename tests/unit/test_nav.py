@@ -42,6 +42,13 @@ def _mkdocs(tmp_path: Path, nav_yaml: str) -> None:
     )
 
 
+def _zensical(tmp_path: Path, nav_toml: str) -> None:
+    (tmp_path / "zensical.toml").write_text(
+        f"[project]\nsite_name = \"Test\"\ndocs_dir = \"docs\"\nnav = {nav_toml}\n",
+        encoding="utf-8",
+    )
+
+
 def _md(docs: Path, rel: str, content: str = "# Page\n") -> Path:
     p = docs / rel
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -222,6 +229,19 @@ def test_resolve_nav_uses_mkdocs_nav_when_present(tmp_path: Path) -> None:
     assert nav.warnings == []
 
 
+def test_resolve_nav_uses_zensical_nav_when_present(tmp_path: Path) -> None:
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    _md(docs, "index.md")
+    _md(docs, "guide.md")
+    _zensical(tmp_path, '[{"Home" = "index.md"}, {"Guide" = "guide.md"}]')
+    cfg = resolve_config(tmp_path)
+    nav = resolve_nav(cfg)
+    assert nav.source == "nav"
+    assert [e.relative_path for e in nav.entries] == [Path("index.md"), Path("guide.md")]
+    assert nav.warnings == []
+
+
 def test_resolve_nav_fallback_scan_when_no_nav_section(tmp_path: Path) -> None:
     docs = tmp_path / "docs"
     docs.mkdir()
@@ -232,6 +252,23 @@ def test_resolve_nav_fallback_scan_when_no_nav_section(tmp_path: Path) -> None:
     nav = resolve_nav(cfg)
     assert nav.source == "scan"
     assert len(nav.warnings) > 0
+    paths = [e.relative_path for e in nav.entries]
+    assert paths == sorted(paths)
+
+
+def test_resolve_nav_fallback_scan_when_zensical_has_no_nav(tmp_path: Path) -> None:
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    _md(docs, "b.md")
+    _md(docs, "a.md")
+    (tmp_path / "zensical.toml").write_text(
+        '[project]\nsite_name = "X"\ndocs_dir = "docs"\n',
+        encoding="utf-8",
+    )
+    cfg = resolve_config(tmp_path)
+    nav = resolve_nav(cfg)
+    assert nav.source == "scan"
+    assert any("zensical.toml" in w for w in nav.warnings)
     paths = [e.relative_path for e in nav.entries]
     assert paths == sorted(paths)
 
@@ -265,3 +302,15 @@ def test_resolve_nav_nav_source_preserves_order(tmp_path: Path) -> None:
         Path("a.md"),
         Path("b.md"),
     ]
+
+
+def test_resolve_nav_prefers_zensical_over_mkdocs_when_both_exist(tmp_path: Path) -> None:
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    _md(docs, "a.md")
+    _md(docs, "b.md")
+    _mkdocs(tmp_path, "  - A: a.md\n")
+    _zensical(tmp_path, '[{"B" = "b.md"}]')
+    cfg = resolve_config(tmp_path)
+    nav = resolve_nav(cfg)
+    assert [e.relative_path for e in nav.entries] == [Path("b.md")]

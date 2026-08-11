@@ -8,7 +8,7 @@ A powerful CLI tool that aggregates Markdown documentation and compiles it to PD
 
 ## The Problem
 
-You have documentation spread across multiple Markdown files, organized in a docs folder with a navigation structure defined in `mkdocs.yml`. You want to generate a **single, cohesive PDF** that includes all your content, properly formatted with:
+You have documentation spread across multiple Markdown files, organized in a docs folder with navigation defined in `zensical.toml` (or `mkdocs.yml` for legacy projects). You want to generate a **single, cohesive PDF** that includes all your content, properly formatted with:
 - A title page with metadata
 - Automatic table of contents
 - Proper heading hierarchy
@@ -20,7 +20,7 @@ You have documentation spread across multiple Markdown files, organized in a doc
 ## Key Features
 
 ✨ **Markdown Aggregation**
-- Scans your docs folder following your `mkdocs.yml` navigation structure
+- Scans your docs folder following your configured navigation structure
 - Aggregates all Markdown files into a single document
 - Preserves heading hierarchy with automatic normalization
 
@@ -33,7 +33,7 @@ You have documentation spread across multiple Markdown files, organized in a doc
 ⚙️ **Configuration Hierarchy**
 - CLI arguments (highest priority)
 - `zensical-pdf.toml` project config
-- `mkdocs.yml` metadata extraction
+- `zensical.toml` metadata and nav extraction (with MkDocs fallback)
 - Built-in defaults (lowest priority)
 
 📄 **PDF Generation**
@@ -86,7 +86,7 @@ Your PDF will be available at `dist/documentation.pdf`.
 
 A complete example project is included in the `example/` directory. It demonstrates:
 - Project configuration with `zensical-pdf.toml`
-- Navigation structure via `mkdocs.yml`
+- Navigation structure via `zensical.toml` or `mkdocs.yml`
 - Multiple documentation pages
 - Local image assets
 

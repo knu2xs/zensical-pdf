@@ -77,7 +77,7 @@ pip install -e .
 
 ## Step 1: Set Up Your Documentation
 
-You should have a docs folder with Markdown files and optionally a `mkdocs.yml` file:
+You should have a docs folder with Markdown files and a project config file (`zensical.toml` recommended):
 
 ```
 your-project/
@@ -89,38 +89,45 @@ your-project/
 │   │   └── reference.md
 │   └── images/
 │       └── logo.png
-├── mkdocs.yml (optional but recommended)
+├── zensical.toml (recommended)
 └── zensical-pdf.toml (optional)
 ```
 
-### mkdocs.yml (recommended)
+### zensical.toml (recommended)
 
 Define your documentation structure:
 
-```yaml
-site_name: My Project
-site_description: Project documentation
-
-nav:
-  - Home: index.md
-  - Guide: guide.md
-  - API:
-    - Overview: api/overview.md
-    - Reference: api/reference.md
+```toml
+[project]
+site_name = "My Project"
+site_description = "Project documentation"
+docs_dir = "docs"
+nav = [
+  { "Home" = "index.md" },
+  { "Guide" = "guide.md" },
+  { "API" = [
+    { "Overview" = "api/overview.md" },
+    { "Reference" = "api/reference.md" },
+  ] },
+]
 ```
 
 zensical-pdf uses this to determine the order and hierarchy of pages in your PDF.
+
+For legacy projects without `zensical.toml`, `mkdocs.yml` is still supported.
 
 ### zensical-pdf.toml (optional)
 
 Create a config file in your project root to customize PDF metadata:
 
 ```toml
-[zensical-pdf]
+[project]
 title = "My Project Documentation"
 subtitle = "A complete guide"
 author = "Your Name"
 version = "1.0.0"
+
+[paths]
 output = "dist/my-docs.pdf"
 ```
 

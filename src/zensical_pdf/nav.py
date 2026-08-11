@@ -4,6 +4,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, Optional
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
 import yaml
 
 from zensical_pdf import NavResolutionError
@@ -102,11 +107,28 @@ def _load_mkdocs_nav(project_dir: Path) -> list | None:
     return data.get("nav")
 
 
+def _load_zensical_nav(project_dir: Path) -> list | None:
+    """Return the raw nav list from zensical.toml [project].nav, or None if absent."""
+    toml_path = project_dir / "zensical.toml"
+    if not toml_path.is_file():
+        return None
+    with toml_path.open("rb") as f:
+        data = tomllib.load(f)
+    project = data.get("project", {})
+    if not isinstance(project, dict):
+        return None
+    return project.get("nav")
+
+
 def resolve_nav(config: PdfConfig) -> NavResult:
-    """Resolve the ordered page list using mkdocs.yml nav or directory scan fallback."""
+    """Resolve page order from zensical.toml or mkdocs.yml nav, with directory scan fallback."""
     warnings: list[str] = []
 
-    nav_list = _load_mkdocs_nav(config.project_dir)
+    zensical_exists = (config.project_dir / "zensical.toml").is_file()
+    if zensical_exists:
+        nav_list = _load_zensical_nav(config.project_dir)
+    else:
+        nav_list = _load_mkdocs_nav(config.project_dir)
 
     if nav_list is not None:
         entries = _walk_nav(nav_list, config.docs_dir, config.permissive, warnings)
@@ -117,8 +139,9 @@ def resolve_nav(config: PdfConfig) -> NavResult:
             f"Docs directory '{config.docs_dir}' does not exist and no nav is configured."
         )
 
+    config_name = "zensical.toml" if zensical_exists else "mkdocs.yml"
     warnings.append(
-        f"No 'nav' section found in configuration. "
+        f"No 'nav' section found in {config_name}. "
         f"Falling back to sorted scan of '{config.docs_dir}'."
     )
     return NavResult(

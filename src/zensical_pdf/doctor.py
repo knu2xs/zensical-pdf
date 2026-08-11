@@ -61,14 +61,14 @@ def check_typst(adapter: TypstAdapter) -> DoctorCheck:
 
 
 def check_project_config(project_dir: Path) -> DoctorCheck:
-    for name in ("zensical-pdf.toml", "mkdocs.yml", "zensical.toml"):
+    for name in ("zensical-pdf.toml", "zensical.toml", "mkdocs.yml"):
         if (project_dir / name).is_file():
             return DoctorCheck("Config detected", "pass", name)
     return DoctorCheck(
         "Config detected",
         "fail",
         f"no config file found in '{project_dir}' "
-        "(expected zensical-pdf.toml, mkdocs.yml, or zensical.toml)",
+        "(expected zensical-pdf.toml, zensical.toml, or mkdocs.yml)",
     )
 
 

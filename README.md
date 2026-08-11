@@ -19,7 +19,7 @@ Generate customer-ready PDF deliverables from [Zensical](https://zensical.com) a
 ## Prerequisites
 
 | Tool | Version | Install |
-|------|---------|---------|
+| ---- | ------- | ------- |
 | Python | ≥ 3.10 | [python.org](https://python.org) |
 | Pandoc | ≥ 3.1.2 | [pandoc.org/installing](https://pandoc.org/installing.html) |
 | Typst | any | [typst.app](https://typst.app) |
@@ -94,8 +94,8 @@ Settings are resolved in this order, with earlier entries taking precedence:
 
 1. CLI arguments (`--output`, `--permissive`)
 2. `zensical-pdf.toml`
-3. `mkdocs.yml` (`docs_dir`, `site_name`, `nav`)
-4. `zensical.toml` (metadata only)
+3. `zensical.toml` (`[project].docs_dir`, `[project].site_name`, `[project].site_author`, `[project].nav`)
+4. `mkdocs.yml` (`docs_dir`, `site_name`, `nav`) — used when `zensical.toml` is not present
 5. Built-in defaults
 
 ---
@@ -159,14 +159,15 @@ jobs:
 ## Supported source types
 
 | Feature | Status |
-|---------|--------|
-| MkDocs project with `mkdocs.yml` | ✅ |
+| ------- | ------ |
+| Zensical project with `zensical.toml` | ✅ |
+| MkDocs project with `mkdocs.yml` | ✅ (fallback) |
 | Nested `nav` sections | ✅ |
 | Local image assets (Markdown + HTML `<img>`) | ✅ |
 | YAML front matter stripping | ✅ |
 | Heading normalisation (H1 → H2) | ✅ |
 | Fallback sorted scan (no `nav`) | ✅ |
-| Zensical project detection | ✅ (metadata only) |
+| Zensical nav from `zensical.toml` | ✅ |
 | External image URLs | ✅ (passed through) |
 
 ---
@@ -197,7 +198,7 @@ Run `zensical-pdf aggregate` and inspect `build/pdf/manifest.json` — the `asse
 
 ### Pages are in the wrong order
 
-Run `zensical-pdf inspect-nav` to see the resolved page order. If it does not match your expected order, check your `mkdocs.yml` `nav` section. If no `nav` is configured, pages are included in stable sorted alphabetical order.
+Run `zensical-pdf inspect-nav` to see the resolved page order. If you use Zensical, check `zensical.toml` `[project].nav`; if you use MkDocs, check `mkdocs.yml` `nav`. If no `nav` is configured, pages are included in stable sorted alphabetical order.
 
 ### Typst compilation fails with a syntax error
 
@@ -217,4 +218,3 @@ pytest tests/ -v
 # Run only unit tests
 pytest tests/unit/ -v
 ```
-

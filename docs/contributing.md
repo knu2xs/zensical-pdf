@@ -180,10 +180,11 @@ All exceptions inherit from `zensical_pdf.ZensicalPdfError`:
 
 1. CLI arguments (highest)
 2. `zensical-pdf.toml`
-3. `mkdocs.yml`
-4. Built-in defaults (lowest)
+3. `zensical.toml`
+4. `mkdocs.yml` (fallback)
+5. Built-in defaults (lowest)
 
-All four levels are checked in `resolve_config()`.
+All five levels are checked in `resolve_config()`.
 
 ### Key Design Patterns
 

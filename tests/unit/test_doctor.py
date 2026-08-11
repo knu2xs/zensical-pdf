@@ -152,6 +152,13 @@ def test_project_config_prefers_toml_over_mkdocs(tmp_path: Path) -> None:
     assert "zensical-pdf.toml" in check.detail
 
 
+def test_project_config_prefers_zensical_over_mkdocs(tmp_path: Path) -> None:
+    (tmp_path / "zensical.toml").write_text('[project]\nsite_name = "X"\n')
+    (tmp_path / "mkdocs.yml").write_text("site_name: X\n")
+    check = check_project_config(tmp_path)
+    assert "zensical.toml" in check.detail
+
+
 # ---------------------------------------------------------------------------
 # check_docs_dir
 # ---------------------------------------------------------------------------
