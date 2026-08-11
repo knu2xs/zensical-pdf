@@ -1,5 +1,6 @@
 """Smoke tests: verify CLI installs, all subcommands are registered, and each exits cleanly."""
 from pathlib import Path
+import re
 from unittest.mock import patch
 
 from typer.testing import CliRunner
@@ -7,6 +8,12 @@ from typer.testing import CliRunner
 from zensical_pdf.cli import app
 
 runner = CliRunner(env={"NO_COLOR": "1"})
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _clean_output(output: str) -> str:
+    return _ANSI_RE.sub("", output)
 
 
 def test_help_lists_all_commands() -> None:
@@ -21,26 +28,27 @@ def test_help_lists_all_commands() -> None:
 def test_inspect_nav_help() -> None:
     result = runner.invoke(app, ["inspect-nav", "--help"])
     assert result.exit_code == 0
-    assert "--project-dir" in result.output
+    assert "--project-dir" in _clean_output(result.output)
 
 
 def test_aggregate_help() -> None:
     result = runner.invoke(app, ["aggregate", "--help"])
     assert result.exit_code == 0
-    assert "--project-dir" in result.output
+    assert "--project-dir" in _clean_output(result.output)
 
 
 def test_build_help() -> None:
     result = runner.invoke(app, ["build", "--help"])
     assert result.exit_code == 0
-    assert "--project-dir" in result.output
-    assert "--output" in result.output
+    cleaned = _clean_output(result.output)
+    assert "--project-dir" in cleaned
+    assert "--output" in cleaned
 
 
 def test_doctor_help() -> None:
     result = runner.invoke(app, ["doctor", "--help"])
     assert result.exit_code == 0
-    assert "--project-dir" in result.output
+    assert "--project-dir" in _clean_output(result.output)
 
 
 def test_inspect_nav_exits_zero(project_dir: Path) -> None:
