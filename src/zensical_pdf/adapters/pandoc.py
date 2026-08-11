@@ -51,6 +51,7 @@ class PandocAdapter:
             "--from=markdown",
             "--to=typst",
             "--standalone",
+            "--variable=font:New Computer Modern",
             f"--output={output_path}",
         ]
         try:
