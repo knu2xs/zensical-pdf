@@ -42,8 +42,8 @@ def test_doctor_help() -> None:
     assert "--project-dir" in result.output
 
 
-def test_inspect_nav_exits_zero(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["inspect-nav", "--project-dir", str(tmp_path)])
+def test_inspect_nav_exits_zero(project_dir: Path) -> None:
+    result = runner.invoke(app, ["inspect-nav", "--project-dir", str(project_dir)])
     assert result.exit_code == 0
 
 

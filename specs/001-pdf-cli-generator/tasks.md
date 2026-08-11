@@ -43,11 +43,11 @@
 
 ⚠️ CRITICAL: No user story implementation can begin until this phase is complete.
 
-- [ ] T006 Define `PdfConfig` dataclass in `src/zensical_pdf/config.py` with all fields from data-model.md: `project_dir`, `docs_dir`, `output`, `build_dir`, `title`, `subtitle`, `author`, `version`, `template`, `normalize_headings`, `include_toc`, `number_sections`, `missing_asset_policy`, `permissive`, `detected_config`
-- [ ] T007 [P] Implement `load_toml_config(project_dir: Path) -> dict` in `src/zensical_pdf/config.py` using `tomllib`/`tomli` try/except import pattern; reads `zensical-pdf.toml` if present
-- [ ] T008 [P] Implement `load_mkdocs_metadata(project_dir: Path) -> dict` in `src/zensical_pdf/config.py` using `yaml.safe_load`; extracts `site_name` and `docs_dir` only (nav is read separately by `nav.py`)
-- [ ] T009 Implement `resolve_config(project_dir: Path, **cli_overrides) -> PdfConfig` in `src/zensical_pdf/config.py` applying priority order: CLI args → `zensical-pdf.toml` → `mkdocs.yml` → `zensical.toml` → defaults; raise `ConfigNotFoundError` if no config and no `docs/` directory found
-- [ ] T010 [P] Write unit tests for config discovery priority, TOML loading, mkdocs.yml metadata extraction, and `ConfigNotFoundError` in `tests/unit/test_config.py`
+- [x] T006 Define `PdfConfig` dataclass in `src/zensical_pdf/config.py` with all fields from data-model.md: `project_dir`, `docs_dir`, `output`, `build_dir`, `title`, `subtitle`, `author`, `version`, `template`, `normalize_headings`, `include_toc`, `number_sections`, `missing_asset_policy`, `permissive`, `detected_config`
+- [x] T007 [P] Implement `load_toml_config(project_dir: Path) -> dict` in `src/zensical_pdf/config.py` using `tomllib`/`tomli` try/except import pattern; reads `zensical-pdf.toml` if present
+- [x] T008 [P] Implement `load_mkdocs_metadata(project_dir: Path) -> dict` in `src/zensical_pdf/config.py` using `yaml.safe_load`; extracts `site_name` and `docs_dir` only (nav is read separately by `nav.py`)
+- [x] T009 Implement `resolve_config(project_dir: Path, **cli_overrides) -> PdfConfig` in `src/zensical_pdf/config.py` applying priority order: CLI args → `zensical-pdf.toml` → `mkdocs.yml` → `zensical.toml` → defaults; raise `ConfigNotFoundError` if no config and no `docs/` directory found
+- [x] T010 [P] Write unit tests for config discovery priority, TOML loading, mkdocs.yml metadata extraction, and `ConfigNotFoundError` in `tests/unit/test_config.py`
 
 **Checkpoint**: `resolve_config(Path("example/"))` returns a `PdfConfig` with `docs_dir = example/docs` and `title = "Example Guide"` (from `example/mkdocs.yml`).
 
@@ -63,15 +63,15 @@
 
 ### Tests for User Story 2
 
-- [ ] T011 [P] [US2] Write unit tests for `resolve_nav()` covering: nav with nested sections, no nav (sorted scan fallback + warning), missing file strict mode (raises `NavResolutionError`), missing file permissive mode (warning + continues), external URL nav entries (skipped with warning) in `tests/unit/test_nav.py`
+- [x] T011 [P] [US2] Write unit tests for `resolve_nav()` covering: nav with nested sections, no nav (sorted scan fallback + warning), missing file strict mode (raises `NavResolutionError`), missing file permissive mode (warning + continues), external URL nav entries (skipped with warning) in `tests/unit/test_nav.py`
 
 ### Implementation for User Story 2
 
-- [ ] T012 [P] [US2] Define `NavEntry` and `NavResult` dataclasses in `src/zensical_pdf/nav.py` with fields from data-model.md
-- [ ] T013 [US2] Implement `_walk_nav(nav_list, docs_dir, permissive) -> list[NavEntry]` recursive walker in `src/zensical_pdf/nav.py`; handle bare string entries, single-key dict entries (title → path), and section-grouping dict entries (title → list); skip non-`.md` entries with a warning
-- [ ] T014 [US2] Implement `_scan_docs_dir(docs_dir) -> list[NavEntry]` sorted fallback scanner in `src/zensical_pdf/nav.py`
-- [ ] T015 [US2] Implement `resolve_nav(config: PdfConfig) -> NavResult` in `src/zensical_pdf/nav.py`; try `mkdocs.yml` nav first, fall back to scan, set `NavResult.source` accordingly
-- [ ] T016 [US2] Implement `inspect_nav` typer command in `src/zensical_pdf/cli.py`; print summary header and rich Table of resolved pages to stdout; emit warnings to stderr via `Console(stderr=True)`; exit 1 on `NavResolutionError`
+- [x] T012 [P] [US2] Define `NavEntry` and `NavResult` dataclasses in `src/zensical_pdf/nav.py` with fields from data-model.md
+- [x] T013 [US2] Implement `_walk_nav(nav_list, docs_dir, permissive) -> list[NavEntry]` recursive walker in `src/zensical_pdf/nav.py`; handle bare string entries, single-key dict entries (title → path), and section-grouping dict entries (title → list); skip non-`.md` entries with a warning
+- [x] T014 [US2] Implement `_scan_docs_dir(docs_dir) -> list[NavEntry]` sorted fallback scanner in `src/zensical_pdf/nav.py`
+- [x] T015 [US2] Implement `resolve_nav(config: PdfConfig) -> NavResult` in `src/zensical_pdf/nav.py`; try `mkdocs.yml` nav first, fall back to scan, set `NavResult.source` accordingly
+- [x] T016 [US2] Implement `inspect_nav` typer command in `src/zensical_pdf/cli.py`; print summary header and rich Table of resolved pages to stdout; emit warnings to stderr via `Console(stderr=True)`; exit 1 on `NavResolutionError`
 
 **Checkpoint**: `zensical-pdf inspect-nav --project-dir example/` exits 0 and lists `index.md`, `guide.md` in nav order.
 

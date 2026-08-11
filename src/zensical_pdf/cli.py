@@ -6,6 +6,10 @@ from typing import Annotated, Optional
 import typer
 from rich.console import Console
 
+from zensical_pdf import ConfigNotFoundError, NavResolutionError
+from zensical_pdf.config import resolve_config
+from zensical_pdf.nav import resolve_nav
+
 app = typer.Typer(
     name="zensical-pdf",
     help="Generate PDF deliverables from Zensical and MkDocs-style documentation projects.",
@@ -13,6 +17,7 @@ app = typer.Typer(
 )
 
 _err = Console(stderr=True)
+_out = Console()
 
 # Reusable Annotated type aliases — default value is always set on the function parameter.
 ProjectDir = Annotated[
@@ -31,8 +36,34 @@ def inspect_nav(
     permissive: Permissive = False,
 ) -> None:
     """Print the resolved page order without producing any output files."""
-    _err.print("[yellow]inspect-nav: not yet implemented[/yellow]")
-    raise typer.Exit(code=0)
+    try:
+        config = resolve_config(project_dir.resolve(), permissive=permissive)
+    except ConfigNotFoundError as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    try:
+        nav = resolve_nav(config)
+    except NavResolutionError as exc:
+        _err.print(f"[red]ERROR:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    for warning in nav.warnings:
+        _err.print(f"[yellow]WARNING:[/yellow] {warning}")
+
+    detected = config.detected_config.name if config.detected_config else "none"
+    try:
+        docs_display = config.docs_dir.relative_to(config.project_dir)
+    except ValueError:
+        docs_display = config.docs_dir
+
+    _out.print(f"Project directory : {config.project_dir}")
+    _out.print(f"Config file       : {detected}")
+    _out.print(f"Docs directory    : {docs_display}")
+    _out.print(f"Pages ({len(nav.entries)} total)   :")
+    for i, entry in enumerate(nav.entries, 1):
+        title_part = f" ({entry.title})" if entry.title else ""
+        _out.print(f"  {i}. {entry.relative_path}{title_part}")
 
 
 @app.command("aggregate")
